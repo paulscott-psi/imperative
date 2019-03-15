@@ -9,6 +9,7 @@
 *
 */
 
+import { PerfTiming } from "@zowe/perf-timing";
 import { IImperativeConfig } from "../../src/doc/IImperativeConfig";
 import { ImperativeConfig } from "../../src/ImperativeConfig";
 import { isAbsolute, join } from "path";
@@ -266,12 +267,11 @@ export class PluginManagementFacility {
         // Loop through each overrides setting here. Setting is an override that we are modifying while
         // plugin is the pluginName from which to get the setting. This is probably the ugliest piece
         // of code that I have ever written :/
-        for (const [setting, pluginName] of Object.entries(AppSettings.instance.settings.overrides)) {
+        for (const [setting, pluginName] of Object.entries(AppSettings.instance.getNamespace("overrides"))) {
             if (pluginName !== false) {
                 Logger.getImperativeLogger().debug(
                     `PluginOverride: Attempting to overwrite "${setting}" with value provided by plugin "${pluginName}"`
                 );
-
                 if (!loadedOverrides.hasOwnProperty(pluginName)) {
                     // the plugin name specified in our settings is not available
                     const overrideErrMsg = `You attempted to override the "${setting}" setting ` +
@@ -366,6 +366,7 @@ export class PluginManagementFacility {
      * @returns {any} - The content exported from the specified module.
      */
     public requirePluginModuleCallback(relativePath: string): any {
+
         const pluginModuleRuntimePath = this.formPluginRuntimePath(this.pluginNmForUseInCallback, relativePath);
         try {
             return require(pluginModuleRuntimePath);
@@ -386,6 +387,14 @@ export class PluginManagementFacility {
      * @param {IPluginCfgProps} pluginCfgProps - The configuration properties for this plugin
      */
     private addPluginToHostCli(pluginCfgProps: IPluginCfgProps): void {
+
+        const timingApi = PerfTiming.api;
+
+        if (PerfTiming.isEnabled) {
+            // Marks point START
+            timingApi.mark("START_ADD_PLUGIN");
+        }
+
         /* Form a top-level command group for this plugin.
          * Resolve all means of command definition into the pluginCmdGroup.children
          */
@@ -463,6 +472,13 @@ export class PluginManagementFacility {
                 this.removeCmdGrpFromResolvedCliCmdTree(pluginCmdGroup);
             }
         }
+
+        if (PerfTiming.isEnabled) {
+            // Marks point END
+            timingApi.mark("END_ADD_PLUGIN");
+            timingApi.measure("Add plugin completed: " + pluginCfgProps.impConfig.name, "START_ADD_PLUGIN", "END_ADD_PLUGIN");
+        }
+
     }
 
     // __________________________________________________________________________
@@ -851,6 +867,14 @@ export class PluginManagementFacility {
         }
 
         // use the core imperative loader because it will load config modules
+
+        const timingApi = PerfTiming.api;
+
+        if (PerfTiming.isEnabled) {
+            // Marks point START
+            timingApi.mark("START_LOAD_PLUGIN");
+        }
+
         let pluginConfig: IImperativeConfig;
         this.pluginNmForUseInCallback = pluginName;
         try {
@@ -866,6 +890,13 @@ export class PluginManagementFacility {
             );
             return null;
         }
+
+        if (PerfTiming.isEnabled) {
+            // Marks point END
+            timingApi.mark("END_LOAD_PLUGIN");
+            timingApi.measure("Load plugin completed", "START_LOAD_PLUGIN", "END_LOAD_PLUGIN");
+        }
+
         this.pluginNmForUseInCallback = "NoPluginNameAssigned";
 
         pluginCfgProps.impConfig = pluginConfig;

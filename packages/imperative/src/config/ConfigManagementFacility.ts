@@ -9,6 +9,7 @@
 *
 */
 
+import { PerfTiming } from "@zowe/perf-timing";
 import { ImperativeConfig } from "../ImperativeConfig";
 import { Logger } from "../../../logger";
 
@@ -55,20 +56,36 @@ export class ConfigManagementFacility {
      * by the facility.
      */
     public init(): void {
+
+        const timingApi = PerfTiming.api;
+
+        if (PerfTiming.isEnabled) {
+            // Marks point START
+            timingApi.mark("START_CONFIG_INIT");
+        }
+
         this.impLogger.debug("ConfigManagementFacility.init() - Start");
 
         // Add the config group and related commands.
         ImperativeConfig.instance.addCmdGrpToLoadedConfig({
             name: "config",
             type: "group",
-            description: "Manage configuration and overrides",
+            description: "Manage configuration and overrides. To see all set-able options use \"list\" command.",
             children: [
                 // require("./cmd/get/get.definition").getDefinition,
                 require("./cmd/set/set.definition").setDefinition,
                 require("./cmd/reset/reset.definition").resetDefinition,
+                require("./cmd/list/list.definition").listDefinition,
+                require("./cmd/get/get.definition").getDefinition,
             ]
         });
 
         this.impLogger.debug("ConfigManagementFacility.init() - Success");
+
+        if (PerfTiming.isEnabled) {
+            // Marks point END
+            timingApi.mark("END_CONFIG_INIT");
+            timingApi.measure("ConfigManagementFacility.init()", "START_CONFIG_INIT", "END_CONFIG_INIT");
+        }
     }
 }
