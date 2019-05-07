@@ -65,6 +65,10 @@ export class ConfigurationValidator {
             // default allowPlugins to true
             config.allowPlugins = true;
         }
+        if (isNullOrUndefined(config.allowShell)) {
+            // default allowShell to true
+            config.allowShell = true;
+        }
 
         // validate profile configurations
         if (!isNullOrUndefined(config.profiles)) {

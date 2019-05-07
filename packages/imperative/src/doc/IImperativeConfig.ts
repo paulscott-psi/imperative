@@ -34,6 +34,14 @@ export interface IImperativeConfig {
     allowConfigGroup?: boolean;
 
     /**
+     * Boolean flag control whether the "shell" group of commands
+     * which exposes an interactive shell for your CLI will be exposed
+     * @type {boolean}
+     * @memberof IImperativeConfig
+     */
+    allowShell?: boolean;
+
+    /**
      * A path to a module (javascript file) that will return a complete IImperativeConfig
      * object. If you use this option, anything else you specify in package.json
      * or your manually provided config object (i.e. Imperative.init({...}) will
