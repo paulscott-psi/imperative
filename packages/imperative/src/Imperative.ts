@@ -299,7 +299,7 @@ export class Imperative {
      * Parse command line arguments and issue the user's specified command
      * @returns {Imperative} this, for chaining syntax
      */
-    public static parse(): Imperative {
+    public static parse(commandString?: string): Imperative {
 
         const timingApi = PerfTiming.api;
 
@@ -308,8 +308,12 @@ export class Imperative {
             timingApi.mark("START_IMP_PARSE");
         }
 
-        Imperative.yargs.argv; // tslint:disable-line
-
+        if (commandString != null) {
+            const parsedArgs = Imperative.yargs.parse(commandString);
+            console.log(JSON.stringify(parsedArgs, null, 2));
+        } else {
+            Imperative.yargs.argv; // tslint:disable-line
+        }
         if (PerfTiming.isEnabled) {
             // Marks point END
             timingApi.mark("END_IMP_PARSE");
