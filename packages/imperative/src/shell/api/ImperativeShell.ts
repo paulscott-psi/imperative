@@ -1,6 +1,6 @@
 import * as readline from "readline";
 import { ICommandDefinition } from "../../../../cmd";
-import { Imperative } from "../../Imperative";
+import { Parser } from "../../../../cmd/src/parser/Parser";
 
 export class ImperativeShell {
 
@@ -12,6 +12,7 @@ export class ImperativeShell {
      */
     constructor(
         private commandTree: ICommandDefinition,
+        private primaryCommands: string[]
     ) {
         // do nothing
     }
@@ -36,9 +37,12 @@ export class ImperativeShell {
                     process.stdout.write("\u001B[2J\u001B[0;0f"); // this insane sequence clears the screen
                     rl.prompt();
                 } else {
-                    // const parsedArgs = this.yargs.parse(cmd);
-                    // process.stdout.write(JSON.stringify(parsedArgs, null, 2) + "\n");
-                    Imperative.parse(cmd);
+                    const parsedArgs = Parser.parse(cmd, {
+                        fullDefinitionTree: this.commandTree,
+                        primaryCommands: this.primaryCommands
+                    });
+                    delete parsedArgs.commandToInvoke.children;
+                    process.stdout.write(JSON.stringify(parsedArgs, null, 2) + "\n");
                     rl.prompt();
                 }
 
