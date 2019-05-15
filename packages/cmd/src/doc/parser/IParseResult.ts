@@ -7,7 +7,18 @@ export interface IParseResult {
     arguments: ICommandArguments;
 
     /**
-     * The command to invoke if parsing is completely successful
+     * Was the parsing completely successful? No unknown values if true
+     */
+    success: boolean;
+
+    /**
+     * Any arguments that couldn't be parsed
+     * Only populated if success is false
+     */
+    unknownArguments: string[];
+
+    /**
+     * The command to invoke if parsing is successful
      */
     commandToInvoke?: ICommandDefinition;
 

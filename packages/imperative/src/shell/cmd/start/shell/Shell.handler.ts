@@ -1,6 +1,5 @@
 import { ICommandHandler, IHandlerParameters } from "../../../../../../cmd";
 import { ImperativeShell } from "../../../api/ImperativeShell";
-import { Imperative } from "../../../../Imperative";
 import { ImperativeConfig } from "../../../../ImperativeConfig";
 
 /**
@@ -8,7 +7,8 @@ import { ImperativeConfig } from "../../../../ImperativeConfig";
  */
 export default class ShellHandler implements ICommandHandler {
     public async process(params: IHandlerParameters) {
-        const primaryCommands =  Object.keys(ImperativeConfig.instance.callerPackageJson.bin);
-        await new ImperativeShell(ImperativeConfig.instance.resolvedCmdTree, primaryCommands).start();
+        const primaryCommands = Object.keys(ImperativeConfig.instance.callerPackageJson.bin);
+        await new ImperativeShell(ImperativeConfig.instance.getPreparedCmdTree(ImperativeConfig.instance.resolvedCmdTree),
+            primaryCommands).start();
     }
 }
