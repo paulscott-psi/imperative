@@ -60,7 +60,6 @@ export class ImperativeShell {
                         fullDefinitionTree: this.commandTree,
                         primaryCommands: this.primaryCommands
                     });
-                    process.stdout.write("Arguments: " + JSON.stringify(parsedArgs.arguments, null, 2) + "\n");
                     this.issueCommand(this.commandTree, parsedArgs.commandToInvoke, parsedArgs.arguments, cmd).then(() => {
                         rl.prompt();
                     }).catch((err: Error) => {
