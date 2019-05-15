@@ -11,30 +11,30 @@ export class GraphicalShell {
 
     public async start() {
         return new Promise((resolve, reject) => {
+                let screen: any;
                 try {
                     // Create a screen object.
-                    const screen = blessed.screen({
+                    screen = blessed.screen({
                         smartCSR: true
                     });
 
                     screen.title = "Graphical Shell";
 
-                    const cmdBox = blessed.Textbox({
-                        top: "left",
-                        left: "left",
+                    const cmdBox = blessed.textbox({
+                        inputOnFocus: true,
+                        parent: screen,
+                        top: 0,
+                        left: 0,
+                        height: 6,
                         width: "90%",
-                        height: "20%",
-                        content: "Hello {bold}world{/bold}!",
+                        content: "Hello",
                         tags: true,
                         border: {
                             type: "none"
                         },
                         style: {
-                            fg: "cyan",
-                            bg: "black",
-                            border: {
-                                fg: "#f0f0f0"
-                            },
+                            fg: "white",
+                            bg: "blue",
                         }
                     });
 
@@ -45,7 +45,7 @@ export class GraphicalShell {
 
                     // If box is focused, handle `enter`/`return` and give us some more content.
                     cmdBox.on("submit", (data: any) => {
-                        console.log("You entered: " + data + "\n");
+                        cmdBox.focus();
                         screen.render();
                     });
 
@@ -59,6 +59,9 @@ export class GraphicalShell {
                     // Render the screen.
                     screen.render();
                 } catch (blessedErr) {
+                    if (screen) {
+                        screen.destroy();
+                    }
                     reject(blessedErr);
                 }
             }
