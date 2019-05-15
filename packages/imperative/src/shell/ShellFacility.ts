@@ -1,6 +1,7 @@
 import { ImperativeConfig } from "../ImperativeConfig";
 import { startDefinition } from "./cmd/start/Start.definition";
 import { Logger } from "../../../logger";
+import { viewDefinition } from "./cmd/view/View.definition";
 
 export class ShellFacility{
 
@@ -47,7 +48,8 @@ export class ShellFacility{
             summary: "Start an interactive shell",
             description: "Start an interactive shell",
             children: [
-                startDefinition
+                startDefinition,
+                viewDefinition
             ]
         });
     }
