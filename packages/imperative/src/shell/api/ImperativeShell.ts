@@ -84,7 +84,7 @@ export class ImperativeShell {
      * @returns [[potential completions], the original command line]
      */
     public completeCommand(command: string): any {
-        return [["hellohello"], command];
+        return [[], command];
     }
 
     /**
