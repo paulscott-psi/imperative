@@ -261,8 +261,9 @@ export class Parser {
                     }
                 }
             }
-            return undefined; // not found
         }
+
+        return undefined; // not found
     }
 
     private static get log(): any {
