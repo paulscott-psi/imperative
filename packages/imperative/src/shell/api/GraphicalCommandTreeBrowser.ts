@@ -38,9 +38,6 @@ export class GraphicalCommandTreeBrowser {
                         style: {
                             fg: "white",
                             bg: "black",
-                            hover: {
-                                bg: "green"
-                            }
                         }
                     });
                     // allow control the table with the keyboard
