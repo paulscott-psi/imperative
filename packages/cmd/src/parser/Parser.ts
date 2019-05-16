@@ -5,7 +5,6 @@ import { isString } from "util";
 import { CliUtils } from "../../../utilities/src/CliUtils";
 import { Constants } from "../../../constants";
 import { IOptionFormat } from "../../../utilities/src/doc/IOptionFormat";
-import { Logger } from "../../../logger";
 
 const splitArgs = require("splitargs2");
 
@@ -40,11 +39,6 @@ export class Parser {
             }
         }
 
-        // // remove any empty arguments, no point in parsing them
-        // commandArguments = commandArguments.filter((argument) => {
-        //     return argument.trim().length > 0;
-        // });
-
         // initialize the parsing result
         const result: IParseResult = {
             arguments: {
@@ -54,6 +48,11 @@ export class Parser {
             success: true,
             unknownArguments: []
         };
+        if (commandArguments.join("").trim().length === 0) {
+                // issue the root command help if there are no args
+                result.commandToInvoke = params.fullDefinitionTree;
+                return result;
+        }
 
         let argumentIndex = 0;
         let currentArgument: string;
@@ -66,20 +65,23 @@ export class Parser {
                 if (currentCommand.children && currentCommand.children.length > 0) {
                     this.log.trace("Current command name is '%s', has '%s' children", currentCommand.name, currentCommand.children.length);
                     for (const child of currentCommand.children) {
-
-                        if (child.name === currentArgument) {
+                        this.log.trace("Comparing argument '%s' against command with name '%s' and aliases '%s'",
+                            currentArgument, child.name, child.aliases);
+                        if (child.name.trim() === currentArgument) {
                             this.log.trace("Found command name '" + child.name + "'");
                             result.arguments._.push(currentArgument);
                             currentCommand = child;
                             commandFound = true;
+                            break;
                         }
                         if (!commandFound && child.aliases && child.aliases.length > 0) {
                             for (const alias of child.aliases) {
-                                if (alias === currentArgument) {
-                                    this.log.trace("Found command alias " + alias + "'");
+                                if (alias.trim() === currentArgument) {
+                                    this.log.trace("Found command alias '%s'", alias);
                                     result.arguments._.push(currentArgument);
                                     currentCommand = child;
                                     commandFound = true;
+                                    break;
                                 }
                             }
                         }
@@ -109,7 +111,7 @@ export class Parser {
                         commandFound = true;
                     }
                 }
-                if (!commandFound) {
+                if (!commandFound && currentArgument.trim().length > 0) {
                     result.unknownArguments.push(currentArgument);
                     result.success = false;
                 }
@@ -250,7 +252,9 @@ export class Parser {
         }
         for (const option of command.options) {
             this.log.trace("Comparing option %s with entered option %s", option.name, optionName);
-            if (option.name === optionName) {
+            if (option.name.trim() === optionName) {
+                this.log.trace("Found match for argument '%s' with option name '%s'",
+                    optionName, option.name);
                 return option;
             } else {
                 for (const alias of option.aliases) {
@@ -267,11 +271,11 @@ export class Parser {
     }
 
     private static get log(): any {
-        // return {  // mocked logger for testing
-        //     trace: (...args: any[]) => {
-        //         console.log.apply(this, args);
-        //     }
-        // };
-        return Logger.getImperativeLogger();
+        return {  // mocked logger for testing
+            trace: (...args: any[]) => {
+                console.log.apply(this, args);
+            }
+        };
+        // return Logger.getImperativeLogger();
     }
 }

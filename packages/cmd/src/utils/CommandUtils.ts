@@ -165,6 +165,7 @@ export class CommandUtils {
                     if (!isNullOrUndefined(child.aliases) && !isNullOrUndefined(descendant.aliases)) {
                         for (const alias of child.aliases) {
                             for (const descendantAlias of descendant.aliases) {
+                                addChildAndDescendantsToSearch(prefix + child.name + " ", descendant, descendantAlias);
                                 addChildAndDescendantsToSearch(prefix + alias + " ", descendant, descendantAlias);
                             }
                         }

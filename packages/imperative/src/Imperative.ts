@@ -52,7 +52,6 @@ import { AppSettings } from "../../settings";
 import { join } from "path";
 import { Console } from "../../console";
 import { ISettingsFile } from "../../settings/src/doc/ISettingsFile";
-import { ShellFacility } from "./shell/ShellFacility";
 
 // Bootstrap the performance tools
 if (PerfTiming.isEnabled) {
@@ -166,11 +165,6 @@ export class Imperative {
                 // If config group is enabled add config commands
                 if (config.allowConfigGroup) {
                     ConfigManagementFacility.instance.init();
-                }
-
-
-                if (config.allowShell) {
-                    ShellFacility.instance.init();
                 }
 
                 // If plugins are allowed, enable core plugins commands

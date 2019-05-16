@@ -25,10 +25,12 @@ export class ImperativeShell {
      * Create a new imperative shell
      * @param commandTree - full command tree of your CLI
      * @param primaryCommands - the primary commands for the CLI. What appears in the "bin" field of your package.json
+     * @param mainBinName - the primary command that you would like to display in error messages/help
      */
     constructor(
         private commandTree: ICommandDefinition,
-        private primaryCommands: string[]
+        private primaryCommands: string[],
+        private mainBinName: string
     ) {
         // do nothing
     }
@@ -39,8 +41,8 @@ export class ImperativeShell {
             const rl = readline.createInterface({
                 input: process.stdin,
                 output: process.stdout,
-                completer: this.completeCommand,
-                prompt: Imperative.rootCommandName + ">"
+                completer: this.completeCommand.bind(this),
+                prompt: TextUtils.chalk.yellow(Imperative.rootCommandName + ">")
             } as any);
 
             rl.on("error", (err: Error) => {
@@ -90,6 +92,13 @@ export class ImperativeShell {
                 rl.close();
                 resolve();
             });
+
+            process.stdin.on("end", () => {
+                process.stdout.write("End of input\n");
+                rl.close();
+                resolve();
+            });
+
         });
     }
 
@@ -99,13 +108,33 @@ export class ImperativeShell {
      * @returns [[potential completions], the original command line]
      */
     public completeCommand(command: string): any {
-        return [[], command];
+        const lev = require("levenshtein");
+        let minimumLevDistance: number = 999999;
+        let closestCommand: string;
+
+        const commandTree = CommandUtils.flattenCommandTreeWithAliases(this.commandTree).filter((command) => {
+            return command.command.type === "command";
+        });
+        let secondClosestCommand: string;
+        for (const commandInTree of commandTree) {
+            if (commandInTree.fullName.trim().length === 0) {
+                continue;
+            }
+            const compare = new lev(command, commandInTree.fullName);
+            if (compare.distance < minimumLevDistance) {
+                minimumLevDistance = compare.distance;
+
+                secondClosestCommand = closestCommand;
+                closestCommand = commandInTree.fullName;
+            }
+        }
+        return [[closestCommand, secondClosestCommand], command];
     }
 
     private async failCommand(fullDefinition: ICommandDefinition, args: ICommandArguments, commandIssued: string) {
         const failedCommandHandler = __dirname + "/../../../../cmd/src/handlers/FailedCommandHandler";
         const failedCommandDefinition: ICommandDefinition = {
-            name: this.primaryCommands[0] + " " + commandIssued,
+            name: this.mainBinName + " " + commandIssued,
             handler: failedCommandHandler,
             type: "command",
             description: "The command you tried to invoke failed"
@@ -114,7 +143,6 @@ export class ImperativeShell {
         const lev = require("levenshtein");
         let minimumLevDistance: number = 999999;
         let closestCommand: string;
-
         const commandTree = CommandUtils.flattenCommandTreeWithAliases(this.commandTree);
 
         for (const command of commandTree) {
@@ -139,7 +167,7 @@ export class ImperativeShell {
         let delimiter: string = ""; // used to delimit between possible 'command' values
 
         let failureMessage = "Command failed due to improper syntax";
-        failureMessage += `\nCommand entered: "${this.primaryCommands[0]} ${commandIssued}"`;
+        failureMessage += `\nCommand entered: "${this.mainBinName} ${commandIssued}"`;
         // limit to three to include two levels of group and command value, if present
         const groupValues = commandIssued.split(" ", three);
 
@@ -149,7 +177,7 @@ export class ImperativeShell {
             if ((group.name.trim() === groupValues[0]) || (group.aliases[0] === groupValues[0])) {
                 groups += groupValues[0] + " ";
                 // found the top level group so loop to see if second level group valid
-                firstUnknownGroup = groupValues[1]
+                firstUnknownGroup = groupValues[1];
                 for (const group2 of group.children) {
                     if ((group2.name.trim() === groupValues[1]) || (group2.aliases[0] === groupValues[1])) {
                         groups += groupValues[1] + " ";
@@ -175,7 +203,7 @@ export class ImperativeShell {
         if (commands.length > 0) {
             failureMessage += `\nAvailable commands are "${commands}".`;
         }
-        failureMessage += `\nUse "${this.primaryCommands[0]}${groups}--help" to view groups, commands, and options.`;
+        failureMessage += `\nUse "${this.mainBinName}${groups}--help" to view groups, commands, and options.`;
         return failureMessage;
     }
 
@@ -205,7 +233,8 @@ export class ImperativeShell {
             promptPhrase: EnvironmentalVariableSettings.read(Imperative.envVariablePrefix).promptPhrase.value ||
                 Constants.DEFAULT_PROMPT_PHRASE // allow environmental variable to override the default prompt phrase
         });
-        if (args[Constants.HELP_OPTION] || command.type === "group") {
+        if (args[Constants.HELP_OPTION] || (command.type === "group" && command !== this.commandTree)) {
+            // don't just invoke help for root command since there are options like --version on the root command
             await processor.help(new CommandResponse({
                 silent: false,
                 responseFormat: (args[Constants.JSON_OPTION] || false) ? "json" : "default",

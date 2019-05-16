@@ -42,8 +42,8 @@ export class DefinitionTreeResolver {
         if (isNullOrUndefined(childrenDefinitions) && isNullOrUndefined(childrenModuleGlobs)) {
             throw new ImperativeError({
                 msg: "No command definitions have been provided " +
-                "to Imperative. Specify modules and/or definitions on your Imperative" +
-                "configuration."
+                    "to Imperative. Specify modules and/or definitions on your Imperative" +
+                    "configuration."
             });
         }
         const root: ICommandDefinition =
@@ -57,13 +57,19 @@ export class DefinitionTreeResolver {
                         name: "version", aliases: ["V"],
                         description: "Display the current version of " + displayName,
                         type: "boolean",
-                        conflictsWith: ["available-commands"]
+                        conflictsWith: ["available-commands", "shell"]
                     },
                     {
                         name: "available-commands", aliases: ["ac"],
                         description: "Displays a list of available commands",
                         type: "boolean",
-                        conflictsWith: ["version"]
+                        conflictsWith: ["version", "shell"]
+                    },
+                    {
+                        name: "shell", aliases: ["sh"],
+                        description: "Start an interactive shell from which you can issue commands for this CLI.",
+                        type: "boolean",
+                        conflictsWith: ["version", "available-commands"]
                     }
                 ],
                 handler: __dirname + "/handlers/DefaultRootCommandHandler",
@@ -87,7 +93,7 @@ export class DefinitionTreeResolver {
      */
     public static combineAllCmdDefs(
         callerDir: string,
-        cmdDefs: ICommandDefinition[]= [],
+        cmdDefs: ICommandDefinition[] = [],
         cmdModuleGlobs: string[] = [],
     ): ICommandDefinition[] {
 
@@ -105,7 +111,7 @@ export class DefinitionTreeResolver {
             if (matches.length < 1) {
                 throw new ImperativeError({
                     msg: "Command module glob for the glob " + childGlob +
-                    " did not match any files searching from: " + callerDir
+                        " did not match any files searching from: " + callerDir
                 });
             }
 
@@ -120,8 +126,8 @@ export class DefinitionTreeResolver {
                 } catch (e) {
                     throw new ImperativeError({
                         msg: "Encountered an error loading one of the files ("
-                        + match + ") that matched the provided " +
-                        "command module glob for the glob " + glob + ": " + e.message
+                            + match + ") that matched the provided " +
+                            "command module glob for the glob " + glob + ": " + e.message
                     });
                 }
 
@@ -129,7 +135,7 @@ export class DefinitionTreeResolver {
         }
 
         for (const child of cmdDefs) {
-                allCmdDefs.push(child);
+            allCmdDefs.push(child);
         }
         return allCmdDefs;
     }

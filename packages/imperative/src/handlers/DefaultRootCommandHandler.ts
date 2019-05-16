@@ -11,8 +11,10 @@
 
 import { Imperative } from "../../../imperative/src/Imperative";
 import { ImperativeConfig } from "../../../imperative/src/ImperativeConfig";
-import { ICommandHandler, IHandlerParameters, ICommandTreeEntry, CommandUtils } from "../../../cmd";
+import { CommandUtils, ICommandHandler, ICommandTreeEntry, IHandlerParameters } from "../../../cmd";
 import { TextUtils } from "../../../utilities";
+import { ImperativeShell } from "../shell/api/ImperativeShell";
+
 /**
  * The default command handler for the top level/root command
  * Allows the user to check the version of the package.
@@ -26,9 +28,9 @@ export default class DefaultRootCommandHandler implements ICommandHandler {
             const packageJson: any = ImperativeConfig.instance.callerPackageJson;
             const versionString =
                 params.response.console.log(packageJson.version);
-            params.response.data.setObj({ version: versionString });
+            params.response.data.setObj({version: versionString});
             params.response.data.setMessage("Version displayed");
-        } else if(params.arguments.availableCommands) {
+        } else if (params.arguments.availableCommands) {
 
             // Gather and display the full set of commands available to the CLI with descriptions
             const cmdList: ICommandTreeEntry[] = CommandUtils.flattenCommandTree(Imperative.fullCommandTree);
@@ -42,6 +44,10 @@ export default class DefaultRootCommandHandler implements ICommandHandler {
                     params.response.console.log("");
                 }
             });
+        } else if (params.arguments.shell) {
+            const primaryCommands = Object.keys(ImperativeConfig.instance.callerPackageJson.bin);
+            await new ImperativeShell(ImperativeConfig.instance.getPreparedCmdTree(ImperativeConfig.instance.resolvedCmdTree),
+                primaryCommands, Imperative.rootCommandName).start();
         } else {
             params.response.console.log(Buffer.from(Imperative.getHelpGenerator({
                 commandDefinition: params.definition,

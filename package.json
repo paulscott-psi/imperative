@@ -50,7 +50,6 @@
   "dependencies": {
     "@types/yargs": "8.0.2",
     "@zowe/perf-timing": "^1.0.3-alpha.201902201448",
-    "blessed-contrib": "^4.8.16",
     "chalk": "2.1.0",
     "cli-table3": "0.5.1",
     "dataobject-parser": "1.2.1",
@@ -65,8 +64,6 @@
     "mkdirp": "0.5.1",
     "moment": "2.20.1",
     "mustache": "2.3.0",
-    "neo-blessed": "^0.2.0",
-    "neo-blessed-contrib": "^4.8.8",
     "npm": "6.4.1",
     "prettyjson": "1.2.1",
     "progress": "2.0.0",
