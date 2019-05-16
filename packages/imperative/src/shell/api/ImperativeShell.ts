@@ -1,5 +1,11 @@
 import * as readline from "readline";
-import { CommandProcessor, CommandResponse, ICommandArguments, ICommandDefinition } from "../../../../cmd";
+import {
+    CommandProcessor,
+    CommandResponse,
+    CommandUtils,
+    ICommandArguments,
+    ICommandDefinition
+} from "../../../../cmd";
 import { Parser } from "../../../../cmd/src/parser/Parser";
 import { ImperativeConfig } from "../../ImperativeConfig";
 import { ImperativeProfileManagerFactory } from "../../profiles/ImperativeProfileManagerFactory";
@@ -7,6 +13,7 @@ import { EnvironmentalVariableSettings, Imperative } from "../../..";
 import { Constants } from "../../../../constants";
 import { ImperativeHelpGeneratorFactory } from "../../help/ImperativeHelpGeneratorFactory";
 import { Logger } from "../../../../logger";
+import { TextUtils } from "../../../../utilities";
 
 /**
  * Shell for Imperative based CLIs
@@ -60,11 +67,19 @@ export class ImperativeShell {
                         fullDefinitionTree: this.commandTree,
                         primaryCommands: this.primaryCommands
                     });
-                    this.issueCommand(this.commandTree, parsedArgs.commandToInvoke, parsedArgs.arguments, cmd).then(() => {
-                        rl.prompt();
-                    }).catch((err: Error) => {
-                        reject(err);
-                    });
+                    if (parsedArgs.success) {
+                        this.issueCommand(this.commandTree, parsedArgs.commandToInvoke, parsedArgs.arguments, cmd).then(() => {
+                            rl.prompt();
+                        }).catch((err: Error) => {
+                            reject(err);
+                        });
+                    } else {
+                        this.failCommand(this.commandTree, parsedArgs.arguments, cmd).then(() => {
+                            rl.prompt();
+                        }).catch((err: Error) => {
+                            rl.prompt(); // syntax errors are okay, don't stop the shell.
+                        });
+                    }
 
                 }
 
@@ -87,6 +102,84 @@ export class ImperativeShell {
         return [[], command];
     }
 
+    private async failCommand(fullDefinition: ICommandDefinition, args: ICommandArguments, commandIssued: string) {
+        const failedCommandHandler = __dirname + "/../../../../cmd/src/handlers/FailedCommandHandler";
+        const failedCommandDefinition: ICommandDefinition = {
+            name: this.primaryCommands[0] + " " + commandIssued,
+            handler: failedCommandHandler,
+            type: "command",
+            description: "The command you tried to invoke failed"
+        };
+        // unknown command, not successful
+        const lev = require("levenshtein");
+        let minimumLevDistance: number = 999999;
+        let closestCommand: string;
+
+        const commandTree = CommandUtils.flattenCommandTreeWithAliases(this.commandTree);
+
+        for (const command of commandTree) {
+            if (command.fullName.trim().length === 0) {
+                continue;
+            }
+            const compare = new lev(commandIssued, command.fullName);
+            if (compare.distance < minimumLevDistance) {
+                minimumLevDistance = compare.distance;
+                closestCommand = command.fullName;
+            }
+        }
+        args.failureMessage = this.buildFailureMessage(commandIssued, closestCommand);
+        return this.issueCommand(fullDefinition, failedCommandDefinition, args, commandIssued);
+    }
+
+    private buildFailureMessage(commandIssued: string, closestCommand ?: string) {
+
+        const three: number = 3;
+        let commands: string = "";
+        let groups: string = " "; // default to " " for proper spacing in message
+        let delimiter: string = ""; // used to delimit between possible 'command' values
+
+        let failureMessage = "Command failed due to improper syntax";
+        failureMessage += `\nCommand entered: "${this.primaryCommands[0]} ${commandIssued}"`;
+        // limit to three to include two levels of group and command value, if present
+        const groupValues = commandIssued.split(" ", three);
+
+        let firstUnknownGroup = groupValues[0];
+        // loop through the top level groups
+        for (const group of this.commandTree.children) {
+            if ((group.name.trim() === groupValues[0]) || (group.aliases[0] === groupValues[0])) {
+                groups += groupValues[0] + " ";
+                // found the top level group so loop to see if second level group valid
+                firstUnknownGroup = groupValues[1]
+                for (const group2 of group.children) {
+                    if ((group2.name.trim() === groupValues[1]) || (group2.aliases[0] === groupValues[1])) {
+                        groups += groupValues[1] + " ";
+                        // second level group valid so command provided is invalid, retrieve the valid command(s)
+                        for (let i = 0; i < group2.children.length; i++) {
+                            if (i > 0) {
+                                delimiter = ", ";
+                            }
+                            commands += delimiter + group2.children[i].name;
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+
+        if (closestCommand != null) {
+            failureMessage += TextUtils.formatMessage("\nUnknown group: %s\n", firstUnknownGroup);
+            failureMessage += TextUtils.formatMessage("Did you mean: %s?", closestCommand);
+        }
+
+        if (commands.length > 0) {
+            failureMessage += `\nAvailable commands are "${commands}".`;
+        }
+        failureMessage += `\nUse "${this.primaryCommands[0]}${groups}--help" to view groups, commands, and options.`;
+        return failureMessage;
+    }
+
+
     /**
      * Issue a command that has been parsed
      * @param fullDefinition
@@ -94,7 +187,9 @@ export class ImperativeShell {
      * @param args
      * @param commandIssued
      */
-    private async issueCommand(fullDefinition: ICommandDefinition, command: ICommandDefinition, args: ICommandArguments, commandIssued: string) {
+    private async issueCommand(fullDefinition: ICommandDefinition,
+                               command: ICommandDefinition, args: ICommandArguments,
+                               commandIssued: string) {
         const processor = new CommandProcessor({
             definition: command,
             fullDefinition,

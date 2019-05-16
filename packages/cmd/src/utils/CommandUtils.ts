@@ -89,8 +89,7 @@ export class CommandUtils {
         }
         if ((optionDef.type as string) === "boolean") {
             return args[optionName] !== undefined;
-        }
-        else {
+        } else {
             return !isNullOrUndefined(args[optionName]);
         }
     }
@@ -138,6 +137,42 @@ export class CommandUtils {
             }
         };
         addChildAndDescendantsToSearch("", tree);
+        result.sort((a, b) => {
+            return a.fullName.localeCompare(b.fullName);
+        });
+        return result;
+    }
+
+
+    /**
+     * Accepts the command definition document tree and flattens to a single level. This is used to make searching
+     * commands and others easily. This flavor returns all permutations of commands with their aliases
+     * @param {ICommandDefinition} tree - The command document tree
+     * @return {ICommandTreeEntry[]} - The flattened document tree with aliases included
+     */
+    public static flattenCommandTreeWithAliases(tree: ICommandDefinition): ICommandTreeEntry[] {
+        const result: ICommandTreeEntry[] = [];
+        const addChildAndDescendantsToSearch = (prefix: string, child: ICommandDefinition, name: string) => {
+            result.push(
+                {
+                    fullName: prefix + name,
+                    tree,
+                    command: child
+                });
+            if (!isNullOrUndefined(child.children)) {
+                for (const descendant of child.children) {
+                    addChildAndDescendantsToSearch(prefix + child.name + " ", descendant, descendant.name);
+                    if (!isNullOrUndefined(child.aliases) && !isNullOrUndefined(descendant.aliases)) {
+                        for (const alias of child.aliases) {
+                            for (const descendantAlias of descendant.aliases) {
+                                addChildAndDescendantsToSearch(prefix + alias + " ", descendant, descendantAlias);
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        addChildAndDescendantsToSearch("", tree, "");
         result.sort((a, b) => {
             return a.fullName.localeCompare(b.fullName);
         });
