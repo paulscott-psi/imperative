@@ -5,6 +5,7 @@ import { isString } from "util";
 import { CliUtils } from "../../../utilities/src/CliUtils";
 import { Constants } from "../../../constants";
 import { IOptionFormat } from "../../../utilities/src/doc/IOptionFormat";
+import { Logger } from "../../../logger";
 
 const splitArgs = require("splitargs2");
 
@@ -276,11 +277,6 @@ export class Parser {
     }
 
     private static get log(): any {
-        return {  // mocked logger for testing
-            trace: (...args: any[]) => {
-                console.log.apply(this, args);
-            }
-        };
-        // return Logger.getImperativeLogger();
+        return Logger.getImperativeLogger();
     }
 }
