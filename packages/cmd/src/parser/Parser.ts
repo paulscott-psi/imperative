@@ -49,9 +49,9 @@ export class Parser {
             unknownArguments: []
         };
         if (commandArguments.join("").trim().length === 0) {
-                // issue the root command help if there are no args
-                result.commandToInvoke = params.fullDefinitionTree;
-                return result;
+            // issue the root command help if there are no args
+            result.commandToInvoke = params.fullDefinitionTree;
+            return result;
         }
 
         let argumentIndex = 0;
@@ -60,6 +60,11 @@ export class Parser {
         while (argumentIndex < commandArguments.length) {
             currentArgument = commandArguments[argumentIndex];
             this.log.trace("Parsing command argument " + currentArgument);
+            if (currentArgument.trim().length === 0) {
+                this.log.trace("Skipping blank argument");
+                argumentIndex++;
+                continue;
+            }
             if (!this.isDashOption(currentArgument)) {
                 let commandFound = false;
                 if (currentCommand.children && currentCommand.children.length > 0) {
@@ -125,7 +130,7 @@ export class Parser {
                         this.log.trace("More than one equals sign in argument '%s'. Parsing may be incorrect", currentArgument);
                     }
                     this.log.trace("Split argument into: " + optionNameAndValue);
-                    const optionName = optionNameAndValue[0].replace(/-/g, "");
+                    const optionName = optionNameAndValue[0].replace(/^-+/, "");
                     let optionValue: any = optionNameAndValue.slice(1).join("");
                     const option = this.findOptionInCommand(optionName, currentCommand);
                     if (option == null) {
@@ -145,7 +150,7 @@ export class Parser {
                     }
                 } else {
                     this.log.trace("No equals sign in argument '%s'", currentArgument);
-                    const optionName = currentArgument.replace(/-/g, "");
+                    const optionName = currentArgument.replace(/^-+/, "");
                     const option = this.findOptionInCommand(optionName, currentCommand);
                     if (option == null) {
                         this.log.trace("Couldn't find option %s in command. Unknown option", optionName);

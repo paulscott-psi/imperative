@@ -59,7 +59,7 @@ export class ImperativeShell {
 
                 const exitCheck = cmd.trim().toLowerCase();
                 if (exitCheck === "exit" || exitCheck === "quit" || exitCheck === "bye") {
-                    process.stdout.write("Exit acknowledged.\n");
+                    process.stdout.write("Exiting shell...\n");
                     resolve();
                 } else if (exitCheck === "clear" || exitCheck === "cls") {
                     process.stdout.write("\u001B[2J\u001B[0;0f"); // this insane sequence clears the screen
