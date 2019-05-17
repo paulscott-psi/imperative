@@ -31,7 +31,7 @@ export class Parser {
         let currentCommand: ICommandDefinition = params.fullDefinitionTree; // start with the root command
         let primaryCommand = params.fullDefinitionTree.name;
         if (params.primaryCommands && params.primaryCommands.length > 0) {
-            this.log.trace("Primary commands for this parsing job are: %s. Comparing against %s", params.primaryCommands,
+            this.log.trace("Primary commands for this parsing job are: '%s'. Comparing against '%s'", params.primaryCommands,
                 commandArguments[0]);
             if (params.primaryCommands.indexOf(commandArguments[0]) >= 0) {
                 this.log.trace("Found primary command %s as first argument of arguments", commandArguments[0]);
@@ -60,7 +60,7 @@ export class Parser {
         let positionalIndex = 0;
         while (argumentIndex < commandArguments.length) {
             currentArgument = commandArguments[argumentIndex];
-            this.log.trace("Parsing command argument " + currentArgument);
+            this.log.trace("Parsing command argument '%s'", currentArgument);
             if (currentArgument.trim().length === 0) {
                 this.log.trace("Skipping blank argument");
                 argumentIndex++;
@@ -69,12 +69,13 @@ export class Parser {
             if (!this.isDashOption(currentArgument)) {
                 let commandFound = false;
                 if (currentCommand.children && currentCommand.children.length > 0) {
-                    this.log.trace("Current command name is '%s', has '%s' children", currentCommand.name, currentCommand.children.length);
+                    this.log.trace("Current command name is '%s', has '%s' children",
+                        currentCommand.name, currentCommand.children.length);
                     for (const child of currentCommand.children) {
                         this.log.trace("Comparing argument '%s' against command with name '%s' and aliases '%s'",
                             currentArgument, child.name, child.aliases);
                         if (child.name.trim() === currentArgument) {
-                            this.log.trace("Found command name '" + child.name + "'");
+                            this.log.trace("Found command name '%s'", child.name);
                             result.arguments._.push(currentArgument);
                             currentCommand = child;
                             commandFound = true;
@@ -122,7 +123,7 @@ export class Parser {
                     result.success = false;
                 }
             } else {
-                this.log.trace("%s is a dash argument", currentArgument);
+                this.log.trace("'%s' is a dash argument", currentArgument);
 
                 if (currentArgument.indexOf("=") >= 0) {
                     this.log.trace("Found equals sign (=) in argument '%s'. Attempting to split on =", currentArgument);
@@ -130,12 +131,12 @@ export class Parser {
                     if (optionNameAndValue.length > 2) {
                         this.log.trace("More than one equals sign in argument '%s'. Parsing may be incorrect", currentArgument);
                     }
-                    this.log.trace("Split argument into: " + optionNameAndValue);
-                    const optionName = optionNameAndValue[0].replace(/^-+/, "");
+                    this.log.trace("Split argument into: '%s'", optionNameAndValue);
+                    const optionName = optionNameAndValue[0].trim().replace(/^-+/, "");
                     let optionValue: any = optionNameAndValue.slice(1).join("");
                     const option = this.findOptionInCommand(optionName, currentCommand);
                     if (option == null) {
-                        this.log.trace("Couldn't find option %s in command. Unknown option", optionName);
+                        this.log.trace("Couldn't find option '%s' in command. Unknown option", optionName);
                         result.unknownArguments.push(currentArgument);
                         result.success = false;
                     } else {
@@ -151,7 +152,7 @@ export class Parser {
                     }
                 } else {
                     this.log.trace("No equals sign in argument '%s'", currentArgument);
-                    const optionName = currentArgument.replace(/^-+/, "");
+                    const optionName = currentArgument.trim().replace(/^-+/, "");
                     const option = this.findOptionInCommand(optionName, currentCommand);
                     if (option == null) {
                         this.log.trace("Couldn't find option %s in command. Unknown option", optionName);
@@ -224,7 +225,7 @@ export class Parser {
     }
 
     private static isDashOption(argument: string) {
-        return argument.charAt(0) === "-";
+        return argument.trim().charAt(0) === "-";
     }
 
     /**
