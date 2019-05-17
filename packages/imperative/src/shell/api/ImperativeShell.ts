@@ -76,7 +76,7 @@ export class ImperativeShell {
                             reject(err);
                         });
                     } else {
-                        this.failCommand(this.commandTree, parsedArgs.arguments, cmd).then(() => {
+                        this.failCommand(this.commandTree, parsedArgs.arguments, parsedArgs.unknownArguments, cmd).then(() => {
                             rl.prompt();
                         }).catch((err: Error) => {
                             rl.prompt(); // syntax errors are okay, don't stop the shell.
@@ -131,7 +131,7 @@ export class ImperativeShell {
         return [[closestCommand, secondClosestCommand], command];
     }
 
-    private async failCommand(fullDefinition: ICommandDefinition, args: ICommandArguments, commandIssued: string) {
+    private async failCommand(fullDefinition: ICommandDefinition, args: ICommandArguments, unknownArgs: string[], commandIssued: string) {
         const failedCommandHandler = __dirname + "/../../../../cmd/src/handlers/FailedCommandHandler";
         const failedCommandDefinition: ICommandDefinition = {
             name: this.mainBinName + " " + commandIssued,
@@ -155,11 +155,11 @@ export class ImperativeShell {
                 closestCommand = command.fullName;
             }
         }
-        args.failureMessage = this.buildFailureMessage(commandIssued, closestCommand);
+        args.failureMessage = this.buildFailureMessage(commandIssued, closestCommand, unknownArgs, args);
         return this.issueCommand(fullDefinition, failedCommandDefinition, args, commandIssued);
     }
 
-    private buildFailureMessage(commandIssued: string, closestCommand ?: string) {
+    private buildFailureMessage(commandIssued: string, closestCommand: string, unknownArgs: string[], args: ICommandArguments) {
 
         const three: number = 3;
         let commands: string = "";
@@ -171,13 +171,12 @@ export class ImperativeShell {
         // limit to three to include two levels of group and command value, if present
         const groupValues = commandIssued.split(" ", three);
 
-        let firstUnknownGroup = groupValues[0];
+        const firstUnknownGroup = unknownArgs[0];
         // loop through the top level groups
         for (const group of this.commandTree.children) {
             if ((group.name.trim() === groupValues[0]) || (group.aliases[0] === groupValues[0])) {
                 groups += groupValues[0] + " ";
                 // found the top level group so loop to see if second level group valid
-                firstUnknownGroup = groupValues[1];
                 for (const group2 of group.children) {
                     if ((group2.name.trim() === groupValues[1]) || (group2.aliases[0] === groupValues[1])) {
                         groups += groupValues[1] + " ";
