@@ -67,7 +67,8 @@ export class DefinitionTreeResolver {
                     },
                     {
                         name: "shell", aliases: ["sh"],
-                        description: "Start an interactive shell from which you can issue commands for this CLI.",
+                        description: "Start an interactive shell from which you can issue commands for this CLI. " +
+                            "Exit the shell by entering 'exit', 'quit', or 'bye'.",
                         type: "boolean",
                         conflictsWith: ["version", "available-commands"]
                     }

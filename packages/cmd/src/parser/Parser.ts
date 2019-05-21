@@ -220,7 +220,24 @@ export class Parser {
             }
             argumentIndex++;
         }
+
         result.commandToInvoke = currentCommand;
+
+        // fill in any array type positionals with an empty array if they haven't been set
+        // yargs does this automatically
+        if (result.commandToInvoke.positionals && result.commandToInvoke.positionals.length > 0) {
+            for (const positional of result.commandToInvoke.positionals) {
+                if (positional.name.indexOf("...") >= 0) {
+                    const positionalName = positional.name.replace("...", "");
+                    // array type positional
+                    if (result.arguments[positionalName] == null) {
+                        this.log.trace("Setting positional value to empty array -- was not set by command");
+                        const optionFormat = CliUtils.getOptionFormat(positionalName);
+                        this.setOptionValue(result.arguments, positionalName, optionFormat, []);
+                    }
+                }
+            }
+        }
         return result;
     }
 
