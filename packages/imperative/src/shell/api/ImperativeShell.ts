@@ -65,9 +65,10 @@ export class ImperativeShell {
                     process.stdout.write("\u001B[2J\u001B[0;0f"); // this insane sequence clears the screen
                     rl.prompt();
                 } else {
-                    const parsedArgs = Parser.parse(cmd, {
+                    const parsedArgs = Parser.parse( {
+                        commandStringOrArguments: cmd,
                         fullDefinitionTree: this.commandTree,
-                        primaryCommands: this.primaryCommands
+                        primaryCommand: this.mainBinName
                     });
                     if (parsedArgs.success) {
                         this.issueCommand(this.commandTree, parsedArgs.commandToInvoke, parsedArgs.arguments, cmd).then(() => {
@@ -112,8 +113,8 @@ export class ImperativeShell {
         let minimumLevDistance: number = 999999;
         let closestCommand: string;
 
-        const commandTree = CommandUtils.flattenCommandTreeWithAliases(this.commandTree).filter((command) => {
-            return command.command.type === "command";
+        const commandTree = CommandUtils.flattenCommandTreeWithAliases(this.commandTree).filter((commandInTree) => {
+            return commandInTree.command.type === "command";
         });
         let secondClosestCommand: string;
         for (const commandInTree of commandTree) {

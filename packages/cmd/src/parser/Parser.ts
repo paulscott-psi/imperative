@@ -18,33 +18,22 @@ export class Parser {
      * @param {string[]} commandStringOrArguments - the arguments that you would like to parse
      * @param params - parameters for parsing. See IParserParameters
      */
-    public static parse(commandStringOrArguments: string | string[],
-                        params: IParserParameters
+    public static parse(params: IParserParameters
     ): IParseResult {
 
         let commandArguments: string[];
-        if (isString(commandStringOrArguments)) {
-            this.log.trace("splitting command into arguments. Command: \"%s\"", commandStringOrArguments);
-            commandArguments = splitArgs(commandStringOrArguments);
+        if (isString(params.commandStringOrArguments)) {
+            this.log.trace("splitting command into arguments. Command: \"%s\"", params.commandStringOrArguments);
+            commandArguments = splitArgs(params.commandStringOrArguments);
             this.log.trace("Parsed arguments: %s", commandArguments);
         }
         let currentCommand: ICommandDefinition = params.fullDefinitionTree; // start with the root command
-        let primaryCommand = params.fullDefinitionTree.name;
-        if (params.primaryCommands && params.primaryCommands.length > 0) {
-            this.log.trace("Primary commands for this parsing job are: '%s'. Comparing against '%s'", params.primaryCommands,
-                commandArguments[0]);
-            if (params.primaryCommands.indexOf(commandArguments[0]) >= 0) {
-                this.log.trace("Found primary command %s as first argument of arguments", commandArguments[0]);
-                primaryCommand = commandArguments[0];
-                commandArguments = commandArguments.slice(1); // delete the primary command from the arguments to parse
-            }
-        }
 
         // initialize the parsing result
         const result: IParseResult = {
             arguments: {
                 _: [],
-                $0: primaryCommand
+                $0: params.primaryCommand
             },
             success: true,
             unknownArguments: []
